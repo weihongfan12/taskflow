@@ -1,0 +1,25 @@
+{
+  "hash": "f924caaa",
+  "configHash": "34472101",
+  "lockfileHash": "1ce99a7e",
+  "browserHash": "a0082ba3",
+  "optimized": {
+    "vue": {
+      "src": "../../node_modules/vue/dist/vue.runtime.esm-bundler.js",
+      "file": "vue.js",
+      "fileHash": "d416501a",
+      "needsInterop": false
+    },
+    "pinia": {
+      "src": "../../node_modules/pinia/dist/pinia.mjs",
+      "file": "pinia.js",
+      "fileHash": "094dd0c7",
+      "needsInterop": false
+    }
+  },
+  "chunks": {
+    "chunk-6FAFFNDF": {
+      "file": "chunk-6FAFFNDF.js"
+    }
+  }
+}
