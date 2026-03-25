@@ -92,7 +92,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onUnmounted } from 'vue'
+import { ref, computed, watch, onUnmounted, onMounted } from 'vue'
 import { useTaskStore } from '../stores/taskStore'
 
 const store = useTaskStore()
@@ -134,6 +134,10 @@ const currentTask = computed(() => {
 
 const todayPomodoros = computed(() => store.todayPomodoros.length)
 const todayMinutes = computed(() => store.todayPomodoros.length * store.settings.workDuration)
+
+onMounted(() => {
+  store.loadFromStorage()
+})
 
 watch(() => store.settings, (newSettings) => {
   localWorkDuration.value = newSettings.workDuration

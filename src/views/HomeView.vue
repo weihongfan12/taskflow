@@ -99,7 +99,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useTaskStore } from '../stores/taskStore'
 import TaskItem from '../components/TaskItem.vue'
 import TaskForm from '../components/TaskForm.vue'
@@ -109,6 +109,10 @@ import UserSettings from '../components/UserSettings.vue'
 import CustomSelect from '../components/CustomSelect.vue'
 
 const store = useTaskStore()
+
+onMounted(() => {
+  store.loadFromStorage()
+})
 
 const showTaskForm = ref(false)
 const showUserSettings = ref(false)

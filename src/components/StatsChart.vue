@@ -6,7 +6,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, onUnmounted } from 'vue'
 import * as echarts from 'echarts'
 import { useTaskStore } from '../stores/taskStore'
 
@@ -25,6 +25,12 @@ function updateChart() {
   if (!chartInstance) return
   
   const weekData = store.weekStats
+  const maxValue = Math.max(
+    ...weekData.map(d => d.tasks),
+    ...weekData.map(d => d.pomodoros),
+    1
+  )
+  const yAxisMax = Math.ceil(maxValue * 1.2)
   
   const option = {
     tooltip: {
@@ -32,11 +38,16 @@ function updateChart() {
       axisPointer: {
         type: 'shadow'
       },
-      backgroundColor: '#fff',
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
       borderColor: '#e5e7eb',
+      borderWidth: 1,
       textStyle: {
-        color: '#333'
-      }
+        color: '#333',
+        fontSize: 13
+      },
+      padding: [12, 16],
+      confine: true,
+      extraCssText: 'box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 8px;'
     },
     legend: {
       data: ['完成任务', '番茄钟'],
@@ -44,12 +55,15 @@ function updateChart() {
       textStyle: {
         color: '#666',
         fontSize: 12
-      }
+      },
+      itemWidth: 16,
+      itemHeight: 8,
+      itemGap: 20
     },
     grid: {
       left: '3%',
       right: '4%',
-      bottom: '15%',
+      bottom: '18%',
       top: '10%',
       containLabel: true
     },
@@ -64,16 +78,25 @@ function updateChart() {
       axisLabel: {
         color: '#666',
         fontSize: 11
+      },
+      axisTick: {
+        show: false
       }
     },
     yAxis: {
       type: 'value',
+      min: 0,
+      max: yAxisMax,
+      interval: 1,
       axisLine: {
         show: false
       },
       axisLabel: {
         color: '#666',
-        fontSize: 11
+        fontSize: 11,
+        formatter: (value) => {
+          return Number.isInteger(value) ? value : ''
+        }
       },
       splitLine: {
         lineStyle: {
@@ -87,20 +110,30 @@ function updateChart() {
         type: 'bar',
         data: weekData.map(d => d.tasks),
         itemStyle: {
-          color: '#4A90D9',
-          borderRadius: [4, 4, 0, 0]
+          color: '#667eea',
+          borderRadius: [6, 6, 0, 0]
         },
-        barWidth: '30%'
+        barWidth: '30%',
+        emphasis: {
+          itemStyle: {
+            color: '#5568d3'
+          }
+        }
       },
       {
         name: '番茄钟',
         type: 'bar',
         data: weekData.map(d => d.pomodoros),
         itemStyle: {
-          color: '#52C41A',
-          borderRadius: [4, 4, 0, 0]
+          color: '#10b981',
+          borderRadius: [6, 6, 0, 0]
         },
-        barWidth: '30%'
+        barWidth: '30%',
+        emphasis: {
+          itemStyle: {
+            color: '#059669'
+          }
+        }
       }
     ]
   }
@@ -109,10 +142,18 @@ function updateChart() {
 }
 
 onMounted(() => {
+  store.loadFromStorage()
   initChart()
   window.addEventListener('resize', () => {
     chartInstance?.resize()
   })
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', () => {
+    chartInstance?.resize()
+  })
+  chartInstance?.dispose()
 })
 
 watch(() => store.weekStats, () => {
