@@ -34,6 +34,7 @@
           v-model="formData.dueDate" 
           type="date"
         />
+          <span class="date-hint">{{ formatDate(formData.dueDate) }}</span>
       </div>
 
       <div class="form-group">
@@ -89,8 +90,21 @@ const formData = reactive({
   title: '',
   priority: 'medium',
   dueDate: '',
+      // 格式: yyyy/mm/日
+      validateDueDate: (v) => !v || /^\d{4}[\/]\\d{1,2}[\/]\\d{1,2}$/.test(v.replace(/万/g,'0000').replace(/[一-三日]/g, m => ({日:'0',月:'0',年:'0'}[m]))) // 简单兼容中文数字
+
   tags: []
 })
+const formatDate = (val) => {
+  if (!val) return '';
+  try {
+    const d = new Date(val);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return y + '/' + m + '/' + day;
+  } catch { return val; }
+};
 
 const tagInput = ref('')
 
