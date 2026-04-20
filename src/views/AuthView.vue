@@ -193,7 +193,10 @@
 
 <script setup>
 import { ref, reactive, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import EyeBall from '../components/auth/EyeBall.vue'
+
+const router = useRouter()
 
 const emit = defineEmits(['login'])
 
@@ -219,13 +222,17 @@ const startBlinking = () => {
   blinkInterval = setInterval(() => {
     isBlinking.value = true
     setTimeout(() => {
-      isBlinking.value = false
     }, 150)
   }, 3000 + Math.random() * 2000)
 }
 
+
+// 记录最后聚焦的字段，用于恢复眼球状态
+const lastFocusedField = ref("")
+
 // 输入框焦点控制眼球
 const onInputFocus = (field) => {
+  lastFocusedField.value = field
   // 根据输入框位置让眼球看向不同方向
   switch (field) {
     case 'username':
@@ -247,9 +254,11 @@ const onInputFocus = (field) => {
 }
 
 const onInputBlur = () => {
-  isBlinking.value = false
-  forceLookX.value = undefined
-  forceLookY.value = undefined
+  if (["password", "confirmPassword"].includes(lastFocusedField.value)) {
+    isBlinking.value = false
+    forceLookX.value = undefined
+    forceLookY.value = undefined
+  }
 }
 
 // 切换登录/注册模式
@@ -313,6 +322,9 @@ const handleSubmit = async () => {
     localStorage.setItem('taskflow_token', 'mock_token_' + Date.now())
 
     emit('login', userData)
+
+    // 注册成功后跳转到登录页面
+    router.push('/login')
   } catch (error) {
     errorMessage.value = isRegister.value ? '注册失败，请重试' : '登录失败，请检查用户名和密码'
   } finally {
