@@ -13,6 +13,7 @@
             :force-look-y="forceLookY"
             eye-color="#fff"
             pupil-color="#1a1a2e"
+            :is-closed="eyeClosed"
           />
           <EyeBall
             :size="80"
@@ -23,6 +24,7 @@
             :force-look-y="forceLookY"
             eye-color="#fff"
             pupil-color="#1a1a2e"
+            :is-closed="eyeClosed"
           />
         </div>
         <h2 class="decoration-title">{{ isRegister ? '欢迎加入' : '欢迎回来' }}</h2>
@@ -192,7 +194,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import EyeBall from '../components/auth/EyeBall.vue'
 
@@ -208,24 +210,7 @@ const showConfirmPassword = ref(false)
 const isBlinking = ref(false)
 const forceLookX = ref(undefined)
 const forceLookY = ref(undefined)
-
-const form = reactive({
-  username: '',
-  email: '',
-  password: '',
-  confirmPassword: ''
-})
-
-// 眨眼动画
-let blinkInterval
-const startBlinking = () => {
-  blinkInterval = setInterval(() => {
-    isBlinking.value = true
-    setTimeout(() => {
-    }, 150)
-  }, 3000 + Math.random() * 2000)
-}
-
+const isPasswordFocused = ref(false)
 
 // 记录最后聚焦的字段，用于恢复眼球状态
 const lastFocusedField = ref("")
@@ -245,8 +230,9 @@ const onInputFocus = (field) => {
       break
     case 'password':
     case 'confirmPassword':
-      // 密码输入时闭眼
-      isBlinking.value = true
+      // 密码输入时闭眼且保持闭眼状态
+      isPasswordFocused.value = true
+      isBlinking.value = false  // 不眨眼，眼睛保持闭合
       forceLookX.value = 0
       forceLookY.value = 0
       break
@@ -255,11 +241,15 @@ const onInputFocus = (field) => {
 
 const onInputBlur = () => {
   if (["password", "confirmPassword"].includes(lastFocusedField.value)) {
-    isBlinking.value = false
+    isPasswordFocused.value = false
+    isBlinking.value = false  // 保持眼睛闭合，直到用户离开
     forceLookX.value = undefined
     forceLookY.value = undefined
   }
 }
+
+// 计算眼睛是否应该完全闭合（密码输入区域有焦点时眼睛保持闭合无动画）
+const eyeClosed = computed(() => isPasswordFocused.value)
 
 // 切换登录/注册模式
 const toggleMode = () => {
@@ -409,14 +399,14 @@ onUnmounted(() => {
   margin-bottom: 32px;
 }
 
-.decoration-title {
+decoration-title {
   font-size: 28px;
   font-weight: 700;
   margin-bottom: 12px;
   text-align: center;
 }
 
-.decoration-subtitle {
+decoration-subtitle {
   font-size: 15px;
   opacity: 0.9;
   text-align: center;
@@ -503,23 +493,16 @@ onUnmounted(() => {
   position: relative;
 }
 
-.password-input-wrapper .form-input {
-  padding-right: 48px;
-}
-
 .toggle-password {
   position: absolute;
-  right: 14px;
+  right: 12px;
   top: 50%;
   transform: translateY(-50%);
   background: none;
-  padding: 4px;
-  color: #888;
-  transition: color 0.2s ease;
-}
-
-.toggle-password:hover {
-  color: #667eea;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
 }
 
 .toggle-password svg {
@@ -527,142 +510,80 @@ onUnmounted(() => {
   height: 20px;
 }
 
-/* 错误提示 */
 .error-message {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 12px 16px;
-  background: #fff5f5;
-  color: #e53e3e;
-  border-radius: 10px;
+  background: #fee;
+  border: 1px solid #fcc;
+  border-radius: 8px;
+  color: #c33;
   font-size: 14px;
 }
 
-.error-message svg {
-  width: 18px;
-  height: 18px;
-  flex-shrink: 0;
-}
-
-/* 提交按钮 */
 .submit-btn {
-  padding: 16px 24px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  width: 100%;
+  padding: 14px;
+  border: none;
   border-radius: 12px;
   font-size: 16px;
   font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.auth-switch {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
-}
-
-.submit-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-}
-
-.submit-btn:active:not(:disabled) {
-  transform: translateY(0);
-}
-
-.submit-btn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-.loading-spinner {
-  width: 18px;
-  height: 18px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: white;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* 切换链接 */
-.auth-switch {
-  text-align: center;
-  margin-top: 24px;
+  margin-top: 16px;
   font-size: 14px;
-  color: #666;
 }
 
 .switch-btn {
   background: none;
+  border: none;
   color: #667eea;
   font-weight: 600;
-  margin-left: 4px;
-  transition: color 0.2s ease;
+  cursor: pointer;
+  padding: 0;
 }
 
-.switch-btn:hover {
-  color: #764ba2;
-  text-decoration: underline;
-}
-
-/* 游客入口 */
 .guest-entry {
-  margin-top: 16px;
   text-align: center;
+  margin-top: 24px;
 }
 
 .guest-btn {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 24px;
-  background: #f7fafc;
-  color: #4a5568;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 500;
+  margin: 0 auto;
+  padding: 10px 24px;
+  border: 1px solid #e8ecf2;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
   transition: all 0.2s ease;
-  border: 1px solid #e2e8f0;
+  font-size: 14px;
 }
 
 .guest-btn:hover {
-  background: #edf2f7;
-  border-color: #cbd5e0;
+  border-color: #667eea;
+  color: #667eea;
 }
 
 .guest-btn svg {
   width: 16px;
   height: 16px;
-}
-
-/* 响应式 */
-@media (max-width: 768px) {
-  .auth-container {
-    flex-direction: column;
-    max-width: 400px;
-  }
-
-  .auth-decoration {
-    padding: 32px;
-    min-height: 180px;
-  }
-
-  .eye-container {
-    margin-bottom: 16px;
-  }
-
-  .decoration-title {
-    font-size: 22px;
-  }
-
-  .auth-form-section {
-    padding: 32px;
-  }
 }
 </style>

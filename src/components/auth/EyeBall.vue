@@ -1,10 +1,10 @@
 <template>
   <div ref="eyeRef" class="eyeball" :style="{
     width: size + 'px',
-    height: isBlinking ? '2px' : size + 'px',
+    height: (isClosed || isBlinking) ? '2px' : size + 'px',
     backgroundColor: eyeColor,
   }">
-    <div v-if="!isBlinking" class="pupil-inner" :style="{
+    <div v-if="!isClosed && !isBlinking" class="pupil-inner" :style="{
       width: pupilSize + 'px',
       height: pupilSize + 'px',
       backgroundColor: pupilColor,
@@ -23,6 +23,7 @@ const props = defineProps({
   eyeColor: { type: String, default: 'white' },
   pupilColor: { type: String, default: 'black' },
   isBlinking: { type: Boolean, default: false },
+  isClosed: { type: Boolean, default: false },
   forceLookX: { type: Number, default: undefined },
   forceLookY: { type: Number, default: undefined }
 })
